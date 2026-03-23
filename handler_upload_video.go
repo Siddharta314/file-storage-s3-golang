@@ -87,6 +87,18 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// get aspect ratio
+	aspectRatio, err := getVideoAspectRatio(tmpFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error getting video aspect ratio", err)
+		return
+	}
+	aspectPrefix := "other"
+	if aspectRatio == "16:9" {
+		aspectPrefix = "landscape"
+	} else if aspectRatio == "9:16" {
+		aspectPrefix = "portrait"
+	}
 	// PutObject
 	randomBytes := make([]byte, 32)
 	if _, err := rand.Read(randomBytes); err != nil {
@@ -94,7 +106,7 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// Convertimos a string hexadecimal
-	s3Key := fmt.Sprintf("%x.mp4", randomBytes)
+	s3Key := fmt.Sprintf("%s/%x.mp4", aspectPrefix, randomBytes)
 
 	_, err = cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      &cfg.s3Bucket,

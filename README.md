@@ -68,3 +68,5 @@ go run .
 ```bash
 go get github.com/aws/aws-sdk-go-v2/service/s3 github.com/aws/aws-sdk-go-v2/config
 ```
+
+`ffprobe -v error -print_format json -show_streams samples/boots-video-horizontal.mp4`

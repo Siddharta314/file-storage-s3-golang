@@ -86,9 +86,21 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Error resetting file pointer", err)
 		return
 	}
+	processedPath, err := processVideoForFastStart(tmpFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error processing video for fast start", err)
+		return
+	}
+	defer os.Remove(processedPath)
+	processedFile, err := os.Open(processedPath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Could not open processed file", err)
+		return
+	}
+	defer processedFile.Close()
 
 	// get aspect ratio
-	aspectRatio, err := getVideoAspectRatio(tmpFile.Name())
+	aspectRatio, err := getVideoAspectRatio(processedPath)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Error getting video aspect ratio", err)
 		return
@@ -105,13 +117,13 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Error generating random name", err)
 		return
 	}
-	// Convertimos a string hexadecimal
+
 	s3Key := fmt.Sprintf("%s/%x.mp4", aspectPrefix, randomBytes)
 
 	_, err = cfg.s3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      &cfg.s3Bucket,
 		Key:         &s3Key,
-		Body:        tmpFile,
+		Body:        processedFile,
 		ContentType: &mediaType,
 	})
 	if err != nil {

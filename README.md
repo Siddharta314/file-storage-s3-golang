@@ -70,3 +70,6 @@ go get github.com/aws/aws-sdk-go-v2/service/s3 github.com/aws/aws-sdk-go-v2/conf
 ```
 
 `ffprobe -v error -print_format json -show_streams samples/boots-video-horizontal.mp4`
+
+
+`aws cloudfront list-invalidations --distribution-id YOUR_DISTRIBUTION_ID`
